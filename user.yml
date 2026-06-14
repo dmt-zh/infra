@@ -1,0 +1,8 @@
+- name: user
+  hosts: demo
+  tasks:
+    - name: Create user
+      user:
+        name: ubuntu_3
+        state: present
+      become: true
