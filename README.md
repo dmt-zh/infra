@@ -1,4 +1,15 @@
-## Ansible Ad-Hoc
+# DevOps Infrastructure & Automation Sandbox
+
+Репозиторий представляет собой интерактивную практическую лабораторию по изучению и внедрению подходов **Infrastructure as Code (IaC)**, автоматизации конфигураций, оркестрации контейнеров и развертыванию инфраструктуры разработки.
+## 🛠 Стек технологий
+* **Конфигурация и автоматизация:** Ansible (Playbooks, Advanced Roles, Jinja2 Templates, Ansible Vault)
+* **Виртуализация и окружение:** Vagrant, VirtualBox
+* **Оркестрация и контейнеризация:** Docker, Docker Swarm
+* **Веб-серверы и проксирование:** Nginx
+
+<hr>
+
+### Ansible Ad-Hoc
 
 **Настройка внутри виртуалки**
 
@@ -19,8 +30,7 @@ ansible -i hosts.ini -m user -a "name=ubuntu_2 state=absent remove=yes" -b demo
 
 <hr>
 
-
-## Ansible Playbook
+### Ansible Playbook
 
 **Запуск сценария управления пользователями**
 ```sh
