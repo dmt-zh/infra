@@ -3,6 +3,6 @@
   tasks:
     - name: Create user
       user:
-        name: ubuntu_3
+        name: ubuntu_2
         state: present
       become: true

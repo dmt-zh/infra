@@ -1,0 +1,22 @@
+- name: user
+  hosts: demo
+  tasks:
+    - name: Preconfig server
+      block:
+        - name: Create user
+          vars:
+            user: ubuntu_2
+          user:
+            name: "{{ user }}"
+            state: present
+          register: task_error
+        - name: Install
+          apt:
+            name: curl
+          register: task_error
+      become: true
+      when: ansible_facts['distribution'] == 'Ubuntu'
+      rescue:
+        - name: Display tasks errors
+          debug:
+            var: task_error
