@@ -1,0 +1,67 @@
+- name: Preconfig
+  hosts: swarm
+  become: true
+  tasks:
+    - name: Docker installation
+      block:
+      - name: "Step 1: Update cache and install prerequisite packages"
+        apt:
+          name:
+            - ca-certificates
+            - curl
+          state: present
+          update_cache: yes
+
+      - name: "Steps 2: Add Docker repository using deb822"
+        ansible.builtin.deb822_repository:
+          name: docker
+          types: deb
+          uris: https://download.docker.com/linux/ubuntu
+          suites: "{{ ansible_facts['distribution_release'] }}"
+          components: stable
+          architectures: amd64
+          signed_by: https://download.docker.com/linux/ubuntu/gpg
+          state: present
+          install_python_debian: true
+
+      - name: "Step 3: Install Docker"
+        apt:
+          name:
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+            - docker-buildx-plugin
+            - docker-compose-plugin
+          state: present
+          update_cache: yes
+
+      - name: "Step 4: Ensure Docker is started and enabled"
+        service:
+          name: docker
+          state: started
+          enabled: yes
+
+      - name: "Step 5: Add Docker to user groups"
+        user:
+          name: "{{ ansible_facts['user_id'] }}"
+          groups: docker
+          append: true
+
+      - name: "Step 6: Reboot the server"
+        reboot:
+
+      - name: "Step 7: Check Docker version"
+        command: docker --version
+        register: docker_version_output
+        changed_when: false
+
+      - name: "Step 8: Check Docker Compose version"
+        command: docker compose version
+        register: compose_version_output
+        changed_when: false
+
+      - name: "Display installed versions"
+        debug:
+          msg: 
+            - "Docker: {{ docker_version_output.stdout }}"
+            - "Docker Compose: {{ compose_version_output.stdout }}"
