@@ -1,3 +1,6 @@
+# ----------------------------------------------
+# Установка Docker на все ноды
+# ----------------------------------------------
 - name: Preconfig
   hosts: swarm
   become: true
@@ -43,25 +46,75 @@
 
       - name: "Step 5: Add Docker to user groups"
         user:
-          name: "{{ ansible_facts['user_id'] }}"
+          name: "{{ ansible_user }}"
           groups: docker
           append: true
 
       - name: "Step 6: Reboot the server"
         reboot:
 
-      - name: "Step 7: Check Docker version"
-        command: docker --version
-        register: docker_version_output
-        changed_when: false
+# ----------------------------------------------
+# Инициализация Swarm на первой ноде (server-1)
+# ----------------------------------------------
+- name: Initialize Docker Swarm Leader
+  hosts: swarm_managers[0]
+  become: true
+  tasks:
+    - name: Check if Swarm is already initialized
+      command: docker info --format '{% raw %}{{.Swarm.LocalNodeState}}{% endraw %}'
+      register: swarm_status
+      changed_when: false
 
-      - name: "Step 8: Check Docker Compose version"
-        command: docker compose version
-        register: compose_version_output
-        changed_when: false
+    - name: Initialize Swarm Cluster
+      command: >
+        docker swarm init 
+        --advertise-addr {{ cluster_ip }}
+      when: swarm_status.stdout == "inactive"
 
-      - name: "Display installed versions"
-        debug:
-          msg: 
-            - "Docker: {{ docker_version_output.stdout }}"
-            - "Docker Compose: {{ compose_version_output.stdout }}"
+    - name: Get Manager Join Token
+      command: docker swarm join-token -q manager
+      register: manager_token
+      changed_when: false
+
+    - name: Get Worker Join Token
+      command: docker swarm join-token -q worker
+      register: worker_token
+      changed_when: false
+
+# ----------------------------------------------
+# Подключение дополнительных Менеджеров (server-2, server-3)
+# ----------------------------------------------
+- name: Join Remaining Managers to Swarm
+  hosts: swarm_managers[1:]
+  become: true
+  tasks:
+    - name: Check if already in Swarm
+      command: docker info --format '{% raw %}{{.Swarm.LocalNodeState}}{% endraw %}'
+      register: swarm_status
+      changed_when: false
+
+    - name: Join as Manager
+      command: >
+        docker swarm join 
+        --token {{ hostvars[groups['swarm_managers'][0]]['manager_token']['stdout'] }} 
+        {{ hostvars[groups['swarm_managers'][0]]['cluster_ip'] }}:2377
+      when: swarm_status.stdout == "inactive"
+
+# ----------------------------------------------
+# Подключение Воркеров (server-4, server-5)
+# ----------------------------------------------
+- name: Join Workers to Swarm
+  hosts: swarm_workers
+  become: true
+  tasks:
+    - name: Check if already in Swarm
+      command: docker info --format '{% raw %}{{.Swarm.LocalNodeState}}{% endraw %}'
+      register: swarm_status
+      changed_when: false
+
+    - name: Join as Worker
+      command: >
+        docker swarm join 
+        --token {{ hostvars[groups['swarm_managers'][0]]['worker_token']['stdout'] }} 
+        {{ hostvars[groups['swarm_managers'][0]]['cluster_ip'] }}:2377
+      when: swarm_status.stdout == "inactive"

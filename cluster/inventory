@@ -1,9 +1,15 @@
-[swarm]
-server-1 ansible_host=127.0.0.1 ansible_user=vagrant ansible_port=2201
-server-2 ansible_host=127.0.0.1 ansible_user=vagrant ansible_port=2202
-server-3 ansible_host=127.0.0.1 ansible_user=vagrant ansible_port=2203
-server-4 ansible_host=127.0.0.1 ansible_user=vagrant ansible_port=2204
-server-5 ansible_host=127.0.0.1 ansible_user=vagrant ansible_port=2205
+[swarm_managers]
+server-1 ansible_host=127.0.0.1 ansible_port=2201 cluster_ip=10.11.10.11
+server-2 ansible_host=127.0.0.1 ansible_port=2202 cluster_ip=10.11.10.12
+server-3 ansible_host=127.0.0.1 ansible_port=2203 cluster_ip=10.11.10.13
+
+[swarm_workers]
+server-4 ansible_host=127.0.0.1 ansible_port=2204 cluster_ip=10.11.10.14
+server-5 ansible_host=127.0.0.1 ansible_port=2205 cluster_ip=10.11.10.15
+
+[swarm:children]
+swarm_managers
+swarm_workers
 
 [swarm:vars]
 ansible_user=vagrant
